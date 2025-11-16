@@ -6,8 +6,7 @@ This project uses [n8n](https://n8n.io) to automate voice-driven task management
 - Actions are routed to Notion (Workout, Idea, Task).
 
 ## Workflow
-![Workflow Screenshot](<img width="1268" height="632" alt="Screenshot 2025-11-16 134100" src="https://github.com/user-attachments/assets/abb4284c-82a5-45db-bb68-c0ece562acbc" />
-)
+![Workflow Screenshot](workflow.png)
 
 
 ## APIs
