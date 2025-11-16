@@ -15,11 +15,11 @@ The project automates voice-driven task management through a defined sequence:
 
 
 ## APIs
-- Telegram Bot API Key TELEGRAM_API_KEY=<your-telegram-bot-token>
+- Telegram Bot API
 
-- OpenAI API Key OPENAI_API_KEY=<your-openai-api-key>
+- OpenAI API
 
-- Notion Integration Token NOTION_API_KEY=<your-notion-integration-token>
+- Notion Integration Token
 
 ## Deployment
 Deployed on Google Cloud Run
