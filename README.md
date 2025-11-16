@@ -5,10 +5,6 @@ This project uses [n8n](https://n8n.io) to automate voice-driven task management
 - An AI agent (GPT) interprets the intent.
 - Actions are routed to Notion (Workout, Idea, Task).
 
-## Workflow
-![Workflow Screenshot](workflow.png)
-
-
 ## APIs
 - Telegram Bot API Key TELEGRAM_API_KEY=<your-telegram-bot-token>
 
