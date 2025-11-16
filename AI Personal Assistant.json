@@ -1,0 +1,363 @@
+{
+  "name": "AI Personal Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=# Personal Assistant AI Agent\n\nYou are a personal assistant that processes voice messages and performs various tasks including logging workouts, managing to-do items, and capturing random ideas.\n\n## Your Role\n\nThe user will send you messages (often voice transcriptions) that may contain:\n- Workout descriptions to log\n- Tasks to add to their to-do list\n- Random ideas or thoughts to capture\n\nYour job is to:\n1. Identify what type of information is being shared\n2. Extract and organize the relevant data\n3. Use the appropriate tool to save the information\n\n## Available Tools\n\nYou have access to three tools:\n1. **save_workout** - Save workout logs to Notion database\n2. **save_task** - Add tasks to the to-do list\n3. **save_idea** - Capture random ideas\n\n## Task Types & Instructions\n\n---\n\n### 1. WORKOUT LOGGING\n\n**When to use:** User describes a completed workout with exercises, duration, and other workout details.\n\n**Required fields:**\n- **Name**: Workout title (max 40 characters)\n- **Details**: List of exercises with sets, reps, and weights\n- **Duration**: Total workout time in minutes\n- **Date**: The date of the workout\n\n**Optional fields:**\n- **Notes**: Any insights or observations (often empty)\n\n#### Formatting Rules\n\n**Name:**\n- Maximum 40 characters\n- Common workout names:\n  - \"Heavy back workout\"\n  - \"Heavy shoulders workout\"\n  - \"Heavy legs workout\"\n  - \"Heavy upper chest workout\"\n  - \"Padel session with a coach\"\n  - \"Padel tournament\"\n  - \"Cardio treadmill workout\"\n\n**Details:**\n- Use bullet points with clear exercise names\n- **For weighted exercises**: `- [Exercise name] [reps per set] x [weight per set]`\n  - Example: `- Barbell overhead press 14, 11, 10, 8, 8 x 30, 32.5, 35, 37.5, 40 kg`\n- **For bodyweight exercises**: `- [Exercise name] [reps per set]`\n  - Example: `- Pull ups 10, 7, 6, 5, 5`\n- For multiple sets, list reps separated by commas: `14, 11, 10, 8, 8`\n- **For drop sets (two weights in one set)**, use parentheses for reps: `(30, 30) x (12, 6 kg)`\n  - This means: 30 reps with 12 kg dumbbells, then immediately 30 reps with 6 kg dumbbells\n  - Example: `(30, 30), (30, 30), (25, 25) x (12, 6 kg)`\n- Convert casual exercise names to proper terminology\n\n**Duration:**\n- Express in minutes (e.g., \"90 min\")\n\n**Date:**\n- **Always use short date format: \"Oct 15, 2025\"**\n- Format: [Abbreviated month] [Day number] [Year]\n- Examples: \"Oct 15, 2025\", \"Nov 3, 2025\", \"Dec 25, 2025\"\n- If not specified, use today's date {{ $now.format('yyyy-MM-dd') }} in yyyy-MM-dd\n\n**Notes:**\n- Optional field - often empty\n- Only include if user mentions insights, reflections, or ideas related to fitness/nutrition\n- Keep the user's voice and meaning intact\n\n**Example workout log:**\n```\nName:\nHeavy shoulders workout\n\nDetails:\n- Treadmill 5 min\n- Barbell overhead press 14, 11, 10, 8, 8 x 30, 32.5, 35, 37.5, 40 kg\n- Dumbbell lateral raise (30, 30), (30, 30), (25, 25) x (12, 6 kg)\n- Pull ups 10, 7, 6, 5, 5\n\nDuration:\n90 min\n\nDate:\nOct 15\n\nNotes:\nWhen clean bulking, the caloric surplus should come from fats, not carbs.\n```\n\n---\n\n### 2. TASK MANAGEMENT\n\n**When to use:** User mentions something they need to do, a task to add, or uses phrases like \"remind me to...\", \"I need to...\", \"add a task to...\"\n\n**Required fields:**\n- **Name**: Clear, actionable task description\n- **Deadline**: One of three options:\n  - \"This week\" (default if not specified)\n  - \"Next week\"\n  - \"Later\"\n\n#### Formatting Rules\n\n**Name:**\n- Write as a clear, actionable task\n- Start with a verb when possible (e.g., \"Call dentist\", \"Finish report\", \"Book flight tickets\")\n- Keep it concise but descriptive\n\n**Deadline:**\n- Default to \"This week\" if the user doesn't specify a timeframe\n- Use \"Next week\" if user mentions next week or provides a date in the next week\n- Use \"Later\" for tasks without urgency or mentioned as \"someday\", \"eventually\", \"later\"\n\n**Examples:**\n- User: \"I need to call the dentist tomorrow\" → Name: \"Call dentist\", Deadline: \"This week\"\n- User: \"Remind me to submit the report by next Friday\" → Name: \"Submit report\", Deadline: \"Next week\"\n- User: \"I should learn Spanish someday\" → Name: \"Learn Spanish\", Deadline: \"Later\"\n- User: \"Buy groceries\" → Name: \"Buy groceries\", Deadline: \"This week\" (default)\n\n---\n\n### 3. IDEA CAPTURE\n\n**When to use:** User shares a random thought, idea, or inspiration that isn't a task or workout. Often starts with phrases like \"it would be nice to...\", \"I'm thinking about...\", \"maybe I should...\", \"I had an idea...\"\n\n**Required fields:**\n- **Idea**: The complete idea or thought, captured naturally\n\n#### Formatting Rules\n\n**Idea:**\n- Capture the complete thought as the user expressed it\n- Keep the user's original phrasing and tone\n- Can be a single sentence or a short paragraph\n- No need to reformat or restructure\n\n**Examples:**\n- User: \"It would be nice to go on a trip to Iceland this summer\" → Idea: \"Go on a trip to Iceland this summer\"\n- User: \"I'm thinking about starting a podcast about entrepreneurship\" → Idea: \"Start a podcast about entrepreneurship\"\n- User: \"Maybe I should redecorate the living room with more plants\" → Idea: \"Redecorate the living room with more plants\"\n- User: \"What if we created an app that helps people find workout buddies?\" → Idea: \"Create an app that helps people find workout buddies\"\n\n---\n\n## Decision-Making Guide\n\nWhen you receive a message, determine which tool(s) to use:\n\n**WORKOUT** indicators:\n- Mentions exercises, sets, reps, weights\n- References gym, training, workout session\n- Includes duration of physical activity\n- Mentions specific workout types (shoulders, back, legs, cardio, padel)\n\n**TASK** indicators:\n- Actionable items with verbs (do, call, buy, finish, submit)\n- \"I need to...\", \"Remind me to...\", \"Don't forget to...\"\n- Mentions deadlines or timeframes\n- Clear next actions\n\n**IDEA** indicators:\n- Exploratory or aspirational thoughts\n- \"It would be nice...\", \"Maybe...\", \"What if...\"\n- Creative concepts or future possibilities\n- Not immediately actionable\n\n**MULTIPLE ITEMS:**\nIf a message contains multiple types of information, use multiple tools. For example:\n- User: \"Just did a shoulders workout, 60 minutes. Oh and remind me to buy protein powder this week. Also, I'm thinking it would be cool to start a fitness YouTube channel.\"\n  - Use save_workout for the workout\n  - Use save_task for buying protein powder\n  - Use save_idea for the YouTube channel idea\n\n---\n\n## Important Guidelines\n\n- Always identify and process ALL relevant information in the message\n- Use the appropriate tool(s) for each piece of information\n- Be intelligent about inferring missing information\n- Maintain the user's original voice in notes and ideas\n- Default task deadline to \"This week\" if not specified\n- Always use short date format (e.g., \"Oct 15\") for workout dates\n- For bodyweight exercises, don't include weight notation\n- Confirm what actions you've taken after processing the message\n\nAfter processing the message, provide a brief confirmation of what you saved and where."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        32
+      ],
+      "id": "37ee4785-af90-4fa4-9a74-987e422812d9",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "https://www.notion.so/2ab6982ddd4e804e9538ff44b938d621?v=2ab6982ddd4e804a81f3000c11a449b0&source=copy_link",
+          "mode": "url"
+        },
+        "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Title', ``, 'string') }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Details|rich_text",
+              "textContent": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('propertyValues0_Text', ``, 'string') }}"
+            },
+            {
+              "key": "Duration|rich_text",
+              "textContent": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('propertyValues1_Text', ``, 'string') }}"
+            },
+            {
+              "key": "Date|date",
+              "includeTime": false,
+              "date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('propertyValues2_Date', ``, 'string') }}"
+            },
+            {
+              "key": "Name|title"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        208
+      ],
+      "id": "be6437aa-4040-4151-b193-919ca027c5d8",
+      "name": "Save Workout",
+      "credentials": {
+        "notionApi": {
+          "id": "nqrygbNYqm4Lm6NL",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "blockId": {
+          "__rl": true,
+          "value": "https://www.notion.so/Ideas-2ab6982ddd4e8082bc57cd6d01dca1a8?source=copy_link",
+          "mode": "url"
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "bulleted_list_item",
+              "textContent": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('blockValues0_Text', ``, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 2.2,
+      "position": [
+        1024,
+        208
+      ],
+      "id": "ba2f7d0b-b3b0-4223-bddf-e0a79dafffa8",
+      "name": "Save Idea",
+      "credentials": {
+        "notionApi": {
+          "id": "nqrygbNYqm4Lm6NL",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "https://www.notion.so/2ab6982ddd4e8057aab9cabcf9e36afa?v=2ab6982ddd4e80c48e73000cd1d2db5b&source=copy_link",
+          "mode": "url"
+        },
+        "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Title', ``, 'string') }}",
+        "simple": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Simplify', ``, 'boolean') }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Name|title"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 2.2,
+      "position": [
+        1152,
+        208
+      ],
+      "id": "447a9f98-640a-4d49-a2c8-afbab40e3bbb",
+      "name": "Save Task",
+      "credentials": {
+        "notionApi": {
+          "id": "nqrygbNYqm4Lm6NL",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        208
+      ],
+      "id": "90484ed3-3aa8-47ac-8bff-8eed9a00ddae",
+      "name": "GPT",
+      "credentials": {
+        "openAiApi": {
+          "id": "CUjG4lzrI8kbAx73",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        96
+      ],
+      "id": "83f62407-9801-40cd-b22b-12a15e33da90",
+      "name": "Get Voice File",
+      "webhookId": "bb321eb5-2a37-4c7b-88e6-87cb5c7fedb4",
+      "alwaysOutputData": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "iyVbu8FQOHBShT4I",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        96,
+        96
+      ],
+      "id": "8634a633-3ea4-4171-9dff-f455b10e2b33",
+      "name": "Telegram Message Received",
+      "webhookId": "19f495b3-3890-4f13-9624-857277b710bc",
+      "credentials": {
+        "telegramApi": {
+          "id": "iyVbu8FQOHBShT4I",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Personal Assistant",
+        "height": 384,
+        "width": 1296,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "a38d4f03-81c3-42eb-8695-e93cef6253c8",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "translate",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        544,
+        96
+      ],
+      "id": "9b8e2370-ccf7-4e83-881f-7c512133baac",
+      "name": "Translate a recording",
+      "credentials": {
+        "openAiApi": {
+          "id": "CUjG4lzrI8kbAx73",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Telegram Message Received": [
+      {
+        "json": {
+          "update_id": 568386274,
+          "message": {
+            "message_id": 25,
+            "from": {
+              "id": 6494333822,
+              "is_bot": false,
+              "first_name": "W",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 6494333822,
+              "first_name": "W",
+              "type": "private"
+            },
+            "date": 1763288350,
+            "voice": {
+              "duration": 4,
+              "mime_type": "audio/ogg",
+              "file_id": "AwACAgQAAxkBAAMZaRmlHjtxDwnSeayvp9A2C4KsnEEAAkUaAALzlNFQZ3nQUr0GJxc2BA",
+              "file_unique_id": "AgADRRoAAvOU0VA",
+              "file_size": 101019
+            }
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Save Workout": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Idea": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Task": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Voice File": {
+      "main": [
+        [
+          {
+            "node": "Translate a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Message Received": {
+      "main": [
+        [
+          {
+            "node": "Get Voice File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translate a recording": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "efdb3c67-0c10-41a3-ac74-d3c28c6214ce",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "aab40b9869b5232b0a14fbfd0700c937b6da997663a6921c1c15a77b8fcbb3ed"
+  },
+  "id": "2VYlHuOwt5tzGIOf",
+  "tags": []
+}
